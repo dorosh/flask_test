@@ -19,8 +19,8 @@ def index():
 
 @app.route('/create_link', methods=['GET', 'POST'])
 def create_link():
-    if not current_user.is_authenticated:
-        return redirect(url_for('index'))
+    # if not current_user.is_authenticated:
+    #     return redirect(url_for('index'))
     form = LinkForm()
     if form.validate_on_submit():
         email = form.email.data
