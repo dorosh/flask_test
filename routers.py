@@ -6,9 +6,9 @@ from flask_login import (
 )
 from flask_mail import Message
 
-from app.models import User
-from app.forms import LinkForm
-from app import app, db, mail
+from wsgi import app, db, mail
+from forms import LinkForm
+from models import User
 
 
 @app.route('/')
@@ -17,10 +17,23 @@ def index():
     return render_template('index.html', title='Home')
 
 
+@app.route('/links')
+def links():
+    email = "dorosshh@gmail.com"
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        user = User(email=email)
+        user.set_token(email)
+        db.session.add(user)
+        db.session.commit()
+
+    return render_template('links.html', title='Home', links=User.query.all())
+
+
 @app.route('/create_link', methods=['GET', 'POST'])
 def create_link():
-    # if not current_user.is_authenticated:
-    #     return redirect(url_for('index'))
+    if not current_user.is_authenticated:
+        return redirect(url_for('index'))
     form = LinkForm()
     if form.validate_on_submit():
         email = form.email.data
@@ -35,14 +48,18 @@ def create_link():
             unique link is {request.url_root}login/{user.token}
         """
         flash(text_msg)
-        with app.app_context():
-            msg = Message(
-                subject="Magic link !!!",
-                sender=app.config.get("MAIL_USERNAME"),
-                recipients=[email],
-                body=text_msg
-            )
-            mail.send(msg)
+        try:
+            with app.app_context():
+                msg = Message(
+                    subject="Magic link !!!",
+                    sender=app.config.get("MAIL_USERNAME"),
+                    recipients=[email],
+                    body=text_msg
+                )
+                mail.send(msg)
+        except Exception as e:
+            print(e)
+        return redirect(url_for('links'))
 
     return render_template('create_link.html', title='Create link', form=form)
 

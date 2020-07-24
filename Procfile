@@ -1,1 +1,1 @@
-web: gunicorn magic_link:app
+web: gunicorn wsgi:app
